@@ -1,99 +1,26 @@
 import puppeteer from 'puppeteer';
-import writeXlsxFile from 'write-excel-file/node';
-import { app, BrowserWindow, Menu, ipcMain } from  'electron';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import csvWritter from "csv-writer";
+import readXlsxFile from 'read-excel-file/node';
 
-const createCsvWriter = csvWritter.createObjectCsvWriter;
-
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-// import express from "express"; 
-// import http from "http";
-// import crossOriginResourseSharing from "cors";
-// import jsonParser from "body-parser";
-
-// const expressApp = express ();
-// expressApp.use(express.json());
-// expressApp.use(jsonParser.json());
-// expressApp.use(crossOriginResourseSharing());
-// const PORT = 8080;
-// const server = http.createServer(expressApp);
-
-// server.listen(PORT,  () => {
-//   console.log("server listening on 8080");
-// })
-
-// let tableRows = await readXlsxFile('./numbersdata.xlsx');
-// tableRows = tableRows.slice(1, tableRows.length);
-let tableRows;
+let tableRows = await readXlsxFile('./numbersdata.xlsx');
+tableRows = tableRows.slice(1, tableRows.length);
 
 
 function removeNonNumeric(input) {
   return +input.replace(/\D/g, '');
 }
 
+tableRows = tableRows.map((rw) => {
+  return [removeNonNumeric(String(rw[0])), rw[1]]
+});
 
-let win;
-// console.log("rows: ", tableRows);
+console.log("rows: ", tableRows);
 
 let recieverQue = 0;
+const reciever = "Arbind";
+
 
 let browser;
-
-const HEADER_ROW = [
-  {
-    id: 'Number',
-    title: 'NUMBER'
-  },
-  {
-    id: 'Last Reply',
-    title: 'LAST REPLY'
-  },
-  {
-    id: 'Replied Time',
-    title: 'REPLIED TIME'
-  }
-]
-
-// expressApp.post("/start-automation", async (req, res) => {
-//   console.log("name locked: ", req.body.reciever);
-//   await launchAutomation(req.body.reciever);
-// });
-
-// expressApp.get("/get-replied-numbers", async (req, res) => { 
-const getReReply = async () => {
-  let page;
-  if(!browser) {
-    browser = await puppeteer.launch({headless: false, executablePath: "/usr/bin/google-chrome-stable",  ignoreHTTPSErrors: true,
-   defaultViewport: null,
-   ignoreDefaultArgs: ['--enable-automation'],
-   args: [
-       '--disable-infobars',
-       '--no-sandbox',
-       '--disable-setuid-sandbox',
-       '--disable-gpu=False',
-       '--enable-webgl',
-       '--start-maximized']
-      }
-      );
-  }
-  page = await browser.newPage();
-  await page.goto('https://web.whatsapp.com/');
-  
-  await page.waitForSelector('#pane-side', { timeout: 10000000 });
-    console.log("loaded");
-  await new Promise((resolve) => setTimeout(() => resolve(true), 2000));
-
-  const data = await getRepliedNumbers(page);
-  
-  return data;
-}
-
-
-const launchAutomation = async (reciever) => {
+(async () => {
    browser = await puppeteer.launch({headless: false, executablePath: "/usr/bin/google-chrome-stable",  ignoreHTTPSErrors: true,
    defaultViewport: null,
    ignoreDefaultArgs: ['--enable-automation'],
@@ -112,12 +39,12 @@ const launchAutomation = async (reciever) => {
 
   // await page.setViewport({width: 1400, height: 900});
 
-  await page.waitForSelector('#pane-side', { timeout: 10000000 });
+  await page.waitForSelector('#pane-side', { timeout: 100000 });
     console.log("loaded");
   await new Promise((resolve) => setTimeout(() => resolve(true), 2000));
 
   return chainMessage(page, reciever);
-};
+})();
 
 
 const getRepliedNumbers = async (page) => {
@@ -125,24 +52,19 @@ const getRepliedNumbers = async (page) => {
     let repliedStudents = [];
     let sidePannelContacts = document.getElementById('pane-side');
     let sidePannelList = sidePannelContacts.querySelector("div").querySelector("div").querySelector('div');
-    console.log("pannel side: ", sidePannelContacts, sidePannelList);
-      for(let i = 0; i < sidePannelList.children.length; i++){  
-        try {
-        if(sidePannelList.children[i].querySelector('div').querySelector('div').querySelector('div').children[1].children[1].children[0].children[0].children.length === 1) {
+      for(let i = 0; i < sidePannelList.children.length; i++){   
+         if(sidePannelList.children[i].querySelector('div').querySelector('div').querySelector('div').children[1].children[1].children[0].children[0].children.length === 1) {
             repliedStudents.push ( {
                 number: sidePannelList.children[i].querySelector('div').querySelector('div').querySelector('div').children[1].children[0].children[0].children[0].children[0].textContent,
                 lastReply: sidePannelList.children[i].querySelector('div').querySelector('div').querySelector('div').children[1].children[1].children[0].children[0].children[0].textContent,
                 when: sidePannelList.children[i].querySelector('div').querySelector('div').querySelector('div').children[1].children[0].children[1].children[0].textContent
             } )
         }
-      }catch(err){
-        null;
-      }
       };
        
     return repliedStudents;
   });
-  browser.close();
+
   return numbersData;
 };
 
@@ -152,16 +74,11 @@ async function chainMessage (page, reciever) {
 
   try {
     console.log(tableRows[recieverQue][1]);
-    // ipcMain.emit("on-bulk-completion", "successfully sended all messages!"); 
   }catch (err) {
-    win.webContents.send("on-bulk-completion", "successfully sended all messages!"); 
     return browser.close();
   }
 
-  if(recieverQue === tableRows.length){
-    win.webContents.send("on-bulk-completion", "successfully sended all messages!"); 
-   return browser.close();
-  }
+  if(recieverQue === tableRows.length) return browser.close();
   
   await page.evaluate(async (reciever) => {
     console.log("reciever name: ", reciever);
@@ -187,15 +104,16 @@ async function chainMessage (page, reciever) {
       return done;
     };
 
-   new Promise ((resolve) => {
-      let interval = setInterval(() => {
+    await new Promise ((resolve) => {
+      let interval =  setInterval(() => {
         if(repeatitself()) {
           resolve(true);
           clearInterval(interval);
         }
-      }, 1000);
-  }).then(() => {
-    console.log("tester div: ", tester);
+      }, 100);
+  });
+      
+        console.log("tester div: ", tester);
     if(tester){
       tester.addEventListener('click', (event) => {
           console.log('just cliked')
@@ -203,22 +121,17 @@ async function chainMessage (page, reciever) {
 
       tester.classList.add("pin-sender");
   }
-  });
-      
   }, reciever);
 
 
-
-
-
-  const pp = await page.waitForSelector(".pin-sender", {timeout: 10000000});
+  const pp = await page.waitForSelector(".pin-sender", {timeout: 600000});
   await pp.click();
 
   async function sendMessage (message, slowDown) {
      const input = await page.waitForSelector('[class="selectable-text copyable-text iq0m558w g0rxnol2"]');
-    await input.type(message, slowDown ? {} : {});
+    await input.type(message, slowDown ? {delay: 100} : {});
     console.log("i typed this: ", message);
-    const sendButton = await page.waitForSelector('[class="tvf2evcx oq44ahr5 lb5m6g5c svlsagor p2rjqpw5 epia9gcq"]', {timeout: 10000000})
+    const sendButton = await page.waitForSelector('[class="tvf2evcx oq44ahr5 lb5m6g5c svlsagor p2rjqpw5 epia9gcq"]', {timeout: 5000000})
     await sendButton.click();
   }
     if(recieverQue === 0){
@@ -270,17 +183,7 @@ async function chainMessage (page, reciever) {
       try {  
         anhors[recieverQue].click();
       }catch (err) {
-        await new Promise ((resolve) => {
-          let int = setInterval(() => {
-            anhors = document.querySelectorAll("a");
-            if(anhors[recieverQue].click){
-              resolve(true);
-              clearInterval(int);
-            }
-          }, 1000);
-        });
-
-        anhors[recieverQue].click();
+        console.log("something error");
       }
         // await new Promise((resolve) => setTimeout(() => resolve(true), 10000));
         await new Promise ((resolve) => {
@@ -373,199 +276,8 @@ async function chainMessage (page, reciever) {
   });  
   // await page.waitForSelector('[class="to2l77zo gfz4du6o ag5g9lrv bze30y65 kao4egtt"]');
   // await page.waitForSelector('[class="tvf2evcx oq44ahr5 lb5m6g5c svlsagor p2rjqpw5 epia9gcq"]')
-  await sendMessage(`Hello, ${tableRows[recieverQue][1]}, this message was sent by a automated software to you. thank you`);
+  await sendMessage(`Hello, ${tableRows[recieverQue][1]}, I am testing my whatsapp automation, thank you!`);
   recieverQue++;
 
   return chainMessage(page, reciever);
 }
-
-const isMac = process.platform === 'darwin'
-
-const template = [
-  // { role: 'appMenu' }
-  ...(isMac
-    ? [{
-        label: app.name,
-        submenu: [
-          { role: 'about' },
-          { type: 'separator' },
-          { role: 'services' },
-          { type: 'separator' },
-          { role: 'hide' },
-          { role: 'hideOthers' },
-          { role: 'unhide' },
-          { type: 'separator' },
-          { role: 'quit' }
-        ]
-      }]
-    : []),
-  // { role: 'fileMenu' }
-  {
-    label: 'File',
-    submenu: [
-      isMac ? { role: 'close' } : { label: 'open csv file', click: () => {
-          // ipcMain.emit("open-csv-file", "*/*");
-          win.webContents.send("open-csv-file", "*/*");
-      }, accelerator: "Ctrl+O" },
-      { label: 'quit application', click: () => {
-        // ipcMain.emit("really-quit-application", "...");
-        win.webContents.send("really-quit-application", "...");
-      }, accelerator: "Ctrl+Q" }
-    ]
-  },
-  // { role: 'editMenu' 
-  // { role: 'viewMenu' }
-  {
-    label: 'View',
-    submenu: [
-      { role: 'reload' },
-      { role: 'forceReload' },
-      { role: 'toggleDevTools' },
-      { type: 'separator' },
-      { role: 'resetZoom' },
-      { role: 'zoomIn' },
-      { role: 'zoomOut' },
-      { type: 'separator' },
-      { role: 'togglefullscreen' }
-    ]
-  },
-  // { role: 'windowMenu' }
-  {
-    label: 'Window',
-    submenu: [
-      { role: 'minimize' },
-      { role: 'zoom' },
-      ...(isMac
-        ? [
-            { type: 'separator' },
-            { role: 'front' },
-            { type: 'separator' },
-            { role: 'window' }
-          ]
-        : [
-            { role: 'close' }
-          ])
-    ]
-  },
-  // Add your custom submenu here
-  {
-    label: 'Automation',
-    submenu: [
-      {
-        label: 'Start Automation',
-        click: () => {
-          // Code to start automation
-        }
-      },
-      {
-        label: 'Retrieve Replied Numbers',
-        click: () => {
-          // Code to retrieve replied numbers
-        }
-      },
-      {
-        label: 'Select CSV File',
-        click: () => {
-          // Code to select CSV file
-        }
-      }
-    ]
-  },
-  {
-    role: 'help',
-    submenu: [
-      {
-        label: 'Learn More',
-        click: async () => {
-          const { shell } = require('electron')
-          await shell.openExternal('https://electronjs.org')
-        }
-      }
-    ]
-  }
-]
-const menu = Menu.buildFromTemplate(template)
-Menu.setApplicationMenu(menu)
-
-
-function createWindow () {
-  win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    }
-  })
-  ipcMain.on('asynchronous-message', (event, arg) => {
-    console.log(arg) // prints "ping" in the Node consol 
-     launchAutomation(arg);
-    // works like `send`, but returning a message back
-    // to the renderer that sent the original message
-    // event.reply('asynchronous-reply', 'pong')
-  });
-
-  ipcMain.on("send-csv", (event, rows) => {
-    tableRows = rows;
-    tableRows = tableRows.slice(1, tableRows.length);
-    tableRows = tableRows.map((rw) => {
-      return [removeNonNumeric(String(rw[0])), rw[1]]
-    });
-    event.reply("csv-reply", "successfully attached");
-    console.log("table datas: ", tableRows)
-  });
-  
-  ipcMain.on("get-reply", async (event, code) => {
-    const bundledData = await getReReply();
-    const dataSetForXlsx = bundledData.map((rw) => {
-      return {
-        "Number": rw.number,
-        "Last Reply": rw.lastReply,
-        "Replied Time": rw.when
-      }
-    });
-
-    // dataSetForXlsx.unshift(HEADER_ROW);
-    const outputDirectory = join(__dirname, 'dist');
-    const filePath = join(outputDirectory, `${String(new Date())}.xlsx`);
-    // await writeXlsxFile(dataSetForXlsx, {
-    //   fileName: filePath
-    // })
-    
-    const csvWriter = createCsvWriter({
-      path: filePath,
-      header: HEADER_ROW,
-  });
-
-    csvWriter.writeRecords(dataSetForXlsx) 
-    .then(() => {
-      event.reply("csv-file-saved", "file saved");
-    }).catch(err => {
-      console.log(err);
-    });
-  }); 
-
-
-  ipcMain.on("quit-the-application", (event, message) => {
-    app.quit();
-  })
-
-  win.loadFile('./frontend/index.html');
-  // win.webContents.openDevTools(true);
-}
-
-app.whenReady().then(() => {
-  createWindow()
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
-  })
-})
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-});
