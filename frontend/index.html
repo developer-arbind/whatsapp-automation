@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.6/flowbite.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="./preload.css">
-    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'"> -->
+    
+    <link rel="stylesheet" href="./preload.css" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' https://cdnjs.cloudflare.com">
     <title>WhatsApp Automation Using Human Mimic!</title>
 </head>
 
@@ -34,11 +35,46 @@
                 <label for="simple-search" class="sr-only">Search</label>
                 <div class="relative w-full">
                     <h1 class="mb-4">Enter reciever name or number</h1>
-                    <input type="text" id="simple-search"
+                    <input type="text" id="simple-search" value="Ramu"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-green-500 dark:focus:border-green-500"
                         placeholder="Example: Arbind or +977 982323-0097" required />
                 </div>
             </form>
+
+<form>
+    <div class="w-full mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
+        <div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
+            <label for="comment" class="sr-only">Your message, here:
+                exmaple: Hello there how are you @n$ameclient, good morning
+            </label>
+            <textarea id="comment-text" value="hello @name" rows="4" class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400"  required /></textarea>
+        </div>
+        <div class="flex items-center justify-between px-3 py-2 border-t dark:border-gray-600">
+            <button type="submit" id="add-message" class="inline-flex items-center py-2.5 px-4 text-xs font-medium text-center text-white bg-blue-700 rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 hover:bg-blue-800">
+                Add message
+            </button>
+        </div>
+    </div>
+ </form>
+<div id="rcb">
+<form class="flex items-center max-w-sm mx-auto">   
+    <label for="simple-search" class="sr-only">number</label>
+    <div class="relative w-full">
+        
+        <input type="text" value="number, name" class="simple-search bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search branch name..." required />
+    </div>
+    <button style="margin-left: 1rem;" type="submit" id="add-header"class="p-2.5 ms-2 text-sm font-medium text-white bg-blue-700 rounded-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+        Add
+        <span class="sr-only">Plus</span>
+    </button>
+</form>
+</div>
+ <p style="margin-bottom: 2rem;margin-top: 1rem;" class="ms-auto text-xs text-gray-500 dark:text-gray-400">Remember, contributions to this topic should follow our <a href="#" class="text-blue-600 dark:text-blue-500 hover:underline">Community Guidelines</a>.</p>
+ 
+<label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Upload Your Excel file</label>
+<input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" aria-describedby="file_input_help" id="excel-thing" type="file">
+<p style="margin-bottom: 2rem;" class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">SVG, PNG, JPG or GIF (MAX. 800x400px).</p>
+
 
             <div class="relative" style="height: 50vh; margin-bottom: 2rem; margin-top: 0;">
                 <div class="dorm">
